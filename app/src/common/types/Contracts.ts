@@ -66,64 +66,357 @@ export type CompiledContract = {
 
 export const defaultSmartContracts: SmartContract[] = [
   {
-    name: "SimpleStorage",
+    name: "DataTypes.sol",
     contract: `// SPDX-License-Identifier: MIT
-    pragma solidity ^0.8.13;
+    pragma solidity ^0.8.16;
 
-    contract SimpleStorage {
-      uint public storedData;
-      event stored(address _to, uint _amount);
-        
-      constructor(uint initVal) public {
-        emit stored(msg.sender, initVal);
-        storedData = initVal;
-      }
-        
-      function set(uint x) public {
-        emit stored(msg.sender, x);
-        storedData = x;
-      }
-        
-      function get() view public returns (uint retVal) {
-        return storedData;
-      }
+    enum DrcStatus {
+    AVAILABLE,
+    LOCKED_FOR_TRANSFER,
+    LOCKED_FOR_UTILIZATION,
+    TRANSFERRED,
+    UTILIZED,
+    DRC_CANCELLED_BY_UTILIZATION,
+    DRC_CANCELLED_BY_AUTHORITY,
+    DRC_CANCELLATION_PROCESS_STARTED
+}
+
+    enum ApplicationStatus {
+    PENDING,
+    SUBMITTED,
+    APPROVED,
+    REJECTED,
+    DRC_ISSUED,
+    VERIFIED,
+    VERIFICATION_REJECTED,
+    SENT_BACK_FOR_CORRECTION,
+    DOCUMENTS_MATCHED_WITH_SCANNED,
+    DOCUMENTS_DID_NOT_MATCHED_WITH_SCANNED
+
+}
+    enum VerificationValues{
+        PENDING,
+        VERIFIED,
+        REJECTED,
+        SENT_BACK_FOR_CORRECTION
+    }
+    enum ApprovalValues{
+        PENDING,
+        APPROVED,
+        REJECTED,
+        SENT_BACK_FOR_CORRECTION
+    }
+
+    enum TdrType {
+        NONE,
+        HERITAGE,
+        RESERVATION,
+        SLUM,
+        NEW_ROAD,
+        EXISTING_ROAD,
+        AMENITY,
+        AGRICULTURE,
+        OTHER
+    }
+
+    enum Department {
+        NONE,
+        LAND,
+        PLANNING,
+        ENGINEERING,
+        PROPERTY,
+        SALES,
+        LEGAL,
+        OTHER
+    }
+
+    enum Role {
+        NONE,
+        USER_MANAGER, //manages the users
+        TDR_NOTICE_MANAGER, // create, verify and approve the notices
+        TDR_APPLICATION_VERIFIER, // approve and verify the application
+        TDR_APPLICATION_SUB_VERIFIER,
+        TDR_APPLICATION_APPROVER_CHIEF_TOWN_AND_COUNTRY_PLANNER,
+        TDR_APPLICATION_APPROVER_CHIEF_ENGINEER,
+        TDR_APPLICATION_APPROVER_DM,
+        TDR_APPLICATION_APPROVER_CHIEF_TOWN_PLANNER,
+        TDR_APPLICATION_APPROVER,
+        DRC_ISSUER,
+        DTA_VERIFIER, // approves and verifies the dta application
+        DTA_APPROVER,
+        DUA_VERIFIER, //approves and verified the dua application
+        DUA_APPROVER,
+        DRC_MANAGER,
+        DRC_CANCELLER,
+        NOMINEE_MANAGER,
+        DOCUMENT_VERIFIER,
+        PROJECT_MANAGER // creates, verified and approves the project
+    }
+
+//    enum Zone {
+
+    // DRC would be stored in this struct. knowing this DRC one should know the owner of the DRC,
+    //  area and the status of the DRC
+    // Everything else, is static data, not to be interpreted by blockchain.
+    struct DRC {
+        bytes32 id;
+        bytes32 applicationId; // application that lead to creation of drc
+        bytes32 noticeId;
+        DrcStatus status;
+        uint farCredited;
+        uint farAvailable;
+        uint areaSurrendered;
+        uint circleRateSurrendered;
+        uint circleRateUtilization;
+        bytes32[] owners;
+        uint timeStamp;
+        bool hasPrevious;
+        bytes32 previousDRC;
+    }
+
+    struct DrcOwner{
+        bytes32 userId;
+        uint area;
+    }
+
+    struct Attribute{
+    string name;
+    string value;
+    string mimeType;
+    }
+
+    struct DrcTransferApplication {
+        bytes32 applicationId;
+        bytes32 drcId;
+        uint farTransferred;
+        Signatory[] applicants;
+//        DrcOwner[] newDrcOwner;
+        bytes32[] buyers;
+        uint8 status;
+        uint timeStamp;
+        bytes32 applicantId;
+    }
+
+
+    struct Signatory {
+        bytes32 userId;
+        bool hasUserSigned;
+    }
+    struct TdrApplicant {
+        bytes32 userId;
+        bool hasUserSigned;
+        int32 share;
+    }
+
+    struct DrcUtilizationDetails {
+        uint8 landUse;
+        uint8 areaType;
+        uint roadWidth;
+        uint purchasableFar;
+        uint basicFar;
+        uint circleRateUtilization;
+    }
+
+    struct DUA {
+        bytes32 applicationId;
+        bytes32 drcId;
+        uint farUtilized;
+        uint farPermitted;
+        Signatory[] signatories;
+        uint8 status;
+        uint timeStamp;
+        DrcUtilizationDetails drcUtilizationDetails;
+        LocationInfo locationInfo;
+        bytes32 applicantId;
+    }
+
+// DRC Utilization Certificate
+    struct DUC {
+        bytes32 id;
+        bytes32 applicationId; // application id of application in BPAS
+        bytes32 noticeId;
+        uint farPermitted;
+        uint circleRateSurrendered; //  from notice
+        bytes32[] owners;
+        uint timeStamp;
+        uint tdrConsumed;
+        DrcUtilizationDetails drcUtilizationDetails;
+        LocationInfo locationInfo;
+    }
+
+    struct TdrApplication {
+        bytes32 applicationId;
+        uint timeStamp;
+        bytes32 place;
+        bytes32 noticeId;
+        uint circleRate;
+        TdrApplicant[] applicants; // this should be applicants user id and then account should be taken from some mapping
+        uint8 status;
+        bytes32 applicantId;
+        string scheme;
+    }
+    struct TdrNotice{
+        bytes32 noticeId;
+        uint timeStamp;
+        LocationInfo locationInfo;
+        PropertyInfo propertyInfo;
+        TdrInfo tdrInfo;
+        uint8 status;
+        ConstructionDetails constructionDetails; // Warning for floating
+        PropertyOwner[] owners;
+        bytes32 propertyId;
+    }
+    struct LocationInfo {
+        bytes32 khasraOrPlotNo;
+        string scheme;
+        bytes32 village;
+        bytes32 tehsil;
+        uint8 zone;
+        bytes32 district;
+    }
+    struct PropertyInfo {
+        bytes32 masterPlan;
+        uint roadWidth;
+        uint8 landUse;
+    }
+    struct TdrInfo {
+        uint areaAffected;
+        uint circleRate;
+        uint farProposed;
+        TdrType tdrType;
+    }
+// note since solidity does not have floating point number, it is in multiple of hundres
+    struct ConstructionDetails {
+        uint256 landArea;
+        uint256 buildUpArea;
+        uint256 carpetArea;
+        uint256 numFloors;
+    }
+
+    struct KdaOfficer {
+        bytes32 userId;
+        Role[] roles;
+        Department department;
+        uint8[] zones;
+        uint8 designation;
+    }
+
+
+
+    struct VerificationStatus {
+        bytes32 officerId;
+        VerificationValues verified;
+        string comment;
+    }
+    struct ApprovalStatus {
+        bytes32 officerId;
+        ApprovalValues approved;
+        string comment;
+    }
+
+    struct TdrVerificationStatus {
+        VerificationValues verified;
+        VerificationStatus landVerification;
+        VerificationStatus planningVerification;
+        VerificationStatus engineeringVerification;
+        VerificationStatus propertyVerification;
+        VerificationStatus salesVerification;
+        VerificationStatus legalVerification;
+        VerificationStatus townPlannerVerification;
+    }
+
+    struct nomineeApplication {
+        bytes32 applicationId;
+        bytes32 userId;
+        bytes32[] nominees;
+        ApplicationStatus status;
+    }
+    struct TdrApprovalStatus {
+        ApprovalValues approved;
+        ApprovalValues hasTownPlannerApproved;
+        ApprovalValues hasChiefEngineerApproved;
+        ApprovalValues hasDMApproved;
+        string townPlannerComment;
+        string chiefEngineerComment;
+        string DMComment;
+    }
+    struct PropertyOwner {
+        string name;
+        string soWo;
+        uint age;
+        string phone;
+        string email;
+        string ownerAddress;
+    }
+
+    struct DrcCancellationInfo{
+        uint cancellationStartTime;
+        uint cancellationTime;
+        uint revertTime;
+        DrcStatus status;
+    }
+
+    struct StatusLog {
+        uint256 timestamp;
+        bytes32 userId;
+        uint8 action;
+        string comment;
+        string file;
+        bytes32 fileHash;
+        string name;
+    }
+
+    struct Project {
+        string name;
+        uint8 areaType;
+        uint8 landUse;
+        TdrType tdrType;
+        ZoneAndScheme[] zoneAndSchemeInfo;
+        uint256 zoneAndSchemeCount;
+    }
+
+    struct ZoneAndScheme {
+        uint8 zone;
+        string scheme;
     }
     `,
   },
   {
-    name: "MultiArgConstructor",
+    name: "Enums",
     contract: `// SPDX-License-Identifier: MIT
-    pragma solidity ^0.8.13;
+    pragma solidity ^0.8.16;
 
-    contract MultiArgConstructor {
-      uint public storedData;
-      uint public secondData;
-      event stored(address _to, uint _amount);
-    
-      constructor(uint initVal, uint initValB) public {
-        emit stored(msg.sender, initVal);
-        storedData = initVal;
-        secondData = initValB;
-      }
-    
-      function set(uint x) public {
-        emit stored(msg.sender, x);
-        storedData = x;
-      }
-    
-      function setSecond(uint x) public { 
-        secondData = x;
-      }
-    
-      function get() view public returns (uint retVal) {
-        return storedData;
-      }
-    
-      function getSecond() view public returns (uint retVal) {
-        return secondData;
-      }
-    
-    }
+enum Status {
+    NONE,
+    CREATED,
+    UPDATED,
+    PENDING,
+    SUBMITTED,
+    APPROVED,
+    REJECTED,
+    DRC_ISSUED,
+    VERIFIED,
+    VERIFICATION_REJECTED,
+    SENT_BACK_FOR_CORRECTION,
+    DOCUMENTS_MATCHED_WITH_SCANNED,
+    DOCUMENTS_DID_NOT_MATCHED_WITH_SCANNED,
+    PENDING_FOR_COMMITTEE_RECOMMENDATION,
+    ISSUED,
+    VERIFIED_BY_LAND,
+    VERIFIED_BY_LEGAL,
+    VERIFIED_BY_PLANNING,
+    FORWARDED_TO_ADDL_SECY,
+    FORWARDED_TO_SECY,
+    PENDING_FOR_VC_RECOMMENDATION,
+    APPROVED_BY_COMMITTEE,
+    PENDING_VERIFICATION_BY_LAND,
+    PENDING_VERIFICATION_BY_PLANNING,
+    PENDING_VERIFICATION_BY_LEGAL,
+    PENDING_VERIFICATION,
+    PENDING_APPROVAL,
+    CANCELLED,
+    APPROVED_BY_LAND_DEPARTMENT
+}
     
     `,
   },

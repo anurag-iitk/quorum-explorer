@@ -1,0 +1,8 @@
+services:
+   explorer:
+      image: consensys/quorum-explorer
+      volumes:
+      - ./src/config/config.json:/app/src/config/config.json
+      - ./.env.local:/app/.env.local
+      ports:
+      - 25000:25000/tcp
