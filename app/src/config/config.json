@@ -4,7 +4,7 @@
     {
       "name": "rpcnode",
       "client": "goquorum",
-      "rpcUrl": "http://34.131.201.95:22000",
+      "rpcUrl": "http://34.131.201.95:22001",
       "privateTxUrl": ""
     },
     {
